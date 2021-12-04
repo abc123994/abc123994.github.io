@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docker-container</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="虛擬化容器">虛擬化容器</h1>
+<ul>
+<li>image (想要運行的程式在docker 內封裝的結果,方便升級以及環境控管.)</li>
+<li>container (執行狀態的image)</li>
+<li>docker (container 的作業系統)</li>
+</ul>
+<h1 id="podman-工具">podman 工具</h1>
+<p>podman ps查看運行中的container<br>
+podman images 查看擁有的印象檔案<br>
+podman save file image 印象檔案匯出 tar<br>
+podman load file 匯入印象檔案<br>
+podman export container 匯出container<br>
+podman import file 匯入印象檔案 (不含原先的env &amp; workdir)<br>
+podman commit container 用當前的container 製作新的image<br>
+podman run image 啟用image =&gt;container<br>
+podman start container 啟用container<br>
+podman stop container 停用container<br>
+podman rm image/container 刪除image or container</p>
+<h1 id="製作docker-image">製作docker image</h1>
+<p><a href="https://github.com/abc123994/test/blob/master/Dockerfile">golang helloworld  image製作</a></p>
+<ol>
+<li>build env 專案目錄複製到gopath  (gopath /go)</li>
+</ol>
+<pre><code> FROM docker.io/golang:1.17.3-alpine3.14 AS build
+ WORKDIR /go
+ COPY . .
+</code></pre>
+<ol start="2">
+<li>build</li>
+</ol>
+<pre><code>  run go install (proj)
+</code></pre>
+<ol start="3">
+<li>copy executable to runtime env</li>
+</ol>
+<pre><code>  COPY --from=build /go/bin .
+  ENTRYPOINT ["./proj"]
+</code></pre>
+<p>4.podman run image</p>
+<h1 id="image-倉庫-harbor.">image 倉庫 harbor.</h1>
+<ol>
+<li>harbor 安裝.</li>
+<li>push image to harbor</li>
+<li>pull image from harbor</li>
+</ol>
+</div>
+</body>
+
+</html>
