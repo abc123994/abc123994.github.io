@@ -49,11 +49,96 @@ podman rm image/container 刪除image or container</p>
 </code></pre>
 <p>4.podman run image</p>
 <h1 id="image-倉庫-harbor.">image 倉庫 harbor.</h1>
-<ol>
-<li>harbor 安裝.</li>
-<li>push image to harbor</li>
-<li>pull image from harbor</li>
-</ol>
+<h3 id="harbor-安裝.">harbor 安裝.</h3>
+<p>1.1   <a href="https://github.com/goharbor/harbor/releases">下載 harbor release</a><br>
+1.2 複製 harbor.yml.tmpl  harbor.yml</p>
+<p><img src="https://abc123994.github.io/harbor/p2.PNG" alt="alt 1.2  修改 harbor.yml.tmpl"><br>
+1.3  自簽憑證(<a href="https://blog.darkthread.net/blog/issue-wildcard-ssl-cert-with-openssl/">註</a>)</p>
+<pre><code>openssl genrsa -des3 -out ca.key 4096 
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 36500 -out ca.crt
+
+
+
+openssl genrsa -out server.key 2048
+cat server-net.cnf
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+[dn]
+C=TW
+ST=Taiwan
+L=Taipei
+CN=*.mydomain.com
+openssl req -new -sha256 -nodes -key server.key -out server.csr -config server-net.cnf
+
+
+cat server-net-v3.ext
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = *.mydomain.com
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 36500 -sha256 -extfile server-net-v3.ext 
+</code></pre>
+<p>1.4  下載docker、dockercompose</p>
+<pre><code>pacman -Sy docker
+pacman -Sy docker-compose
+systemctl enable docker
+systemctl start docker
+
+</code></pre>
+<p>1.5  docker compose add service</p>
+<pre><code>vi /etc/systemd/system/harbor-nginx.service
+[Unit]
+Description=harbor-docker
+
+[Service]
+ExecStart=docker-compose  -f /home/user/harbor/docker-compose.yml start
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+systemctl enable harbor-nginx.service
+systemctl start harbor-nginx.service
+
+</code></pre>
+<p>1.6  install</p>
+<pre><code>	./harbordir/.install.sh
+</code></pre>
+<p><img src="https://abc123994.github.io/harbor/p3.PNG" alt="alt 1.6 install"><br>
+1.7  hosts 修改<br>
+1.8  ca信任</p>
+<pre><code> cp /etc/harborssl/ca.crt  /etc/ca-certificates/trust-source/anchors/
+ update-ca-trust
+</code></pre>
+<h3 id="login-harbor">login harbor</h3>
+<pre><code> docker login harbor.mydomain.com
+ default user:admin
+ default password:Harbor12345
+</code></pre>
+<p><img src="https://abc123994.github.io/harbor/p4.PNG" alt=" install"></p>
+<h3 id="push-image-to-harbor">push image to harbor</h3>
+<pre><code>docker tag nginx  
+harbor.mydomain.com/library/test:v1
+docker push harbor.mydomain.com/library/test:v1
+
+</code></pre>
+<p><img src="https://abc123994.github.io/harbor/p5.PNG" alt=" install"></p>
+<h3 id="pull-image-harbor">pull image harbor</h3>
+<pre><code>docker pull harbor.mydomain.com/library/test:v1
+</code></pre>
+<p><img src="https://abc123994.github.io/harbor/p6.PNG" alt=" install"></p>
+<h3 id="execute-image">execute image</h3>
+<pre><code>docker run -d --name test -p 8888:80 harbor.mydomain.com/library/test:v1
+</code></pre>
+<p><img src="https://abc123994.github.io/harbor/p8.PNG" alt=" exe"><br>
+<img src="https://abc123994.github.io/harbor/p7.PNG" alt=" exe"></p>
 </div>
 </body>
 

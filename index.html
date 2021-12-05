@@ -17,7 +17,7 @@
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
     <!--引用jQuery-->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
-
+	<script src="global.js"></script>
 
 </head>
 </head>
@@ -32,47 +32,54 @@
         <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#"  onclick="load('')">HOME</a>
+					  <a class="nav-link active" href="#"  onclick="changePage('default.html')">HOME</a>
+                    
                 </li>
             </ul>
             <ul class="navbar-nav ">
-			            <li><a class="nav-link" href="#"  onclick="load('docker-container.html')">DOCKER</a></li>
-                        <li><a class="nav-link" href="#"  onclick="load('archlinux.html')">ARCHLINUX</a></li>
-						<li><a class="nav-link" href="#" onclick="load('archlinux-k8s.html')">KUBERNETS</a></li>
-                        <li><a class="nav-link" href="#" onclick="load('git.html')">GIT</a></li>
-						<li><a class="nav-link" href="#" onclick="load('')">NGINX</a></li>
-           <!--     
-		   <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> STUDY </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">DOCKER</a></li>
-                        <li><a class="dropdown-item" href="#">ARCHLINUX</a></li>
-						<li><a class="dropdown-item" href="#">KUBERNETS</a></li>
-                        <li><a class="dropdown-item" href="#">GIT</a></li>
-						<li><a class="dropdown-item" href="#">NGINX</a></li>  
-                    </ul>
-                </li>
-			!-->
+
+                        <li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> STUDY </a>
+							<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+								<li><a class="dropdown-item" href="#" onclick="changePage('./docker-container.html')">DOCKER</a></li>
+								<li><a class="dropdown-item" href="#" onclick="changePage('./archlinux.html')">ARCHLINUX</a></li>
+								<li><a class="dropdown-item" href="#" onclick="changePage('./archlinux-k8s.html')">KUBERNETS</a></li>
+								<li><a class="dropdown-item" href="#" onclick="changePage('./git.html')">GIT</a></li>
+								<!--<li><a class="dropdown-item" href="#" onclick="changePage('./memo/docker-container.html')">NGINX</a></li>  --!>
+							</ul>
+						</li>
+
+
+               
+		
+			
 			</ul>
         </div>
     </div>
 </nav>
+<!--  !-->
 
-<div id="content"  style="margin-top:65px; width:100%; height:100%; z-index:1">
-
-</div>
+<div id="content" style="margin-top:70px"></div>
 <script>
-function load (e){
+
+$(document).ready(function(){
+		console.log("on init.");
+
+	innerdiv=$("#content");
+
 	
-	//document.getElementById("content").innerHTML='<object type="text/html" data="docker-container.html" ></object>';
-	
-	
-	 $("#content").load(e);
-}
-$(document).ready( function() {
-	console.log("init");
-	
+
+	changePage("login.html");
+
+  
+
 });
+
 </script>
+
+
+
 </body>
 </html>
+
+
