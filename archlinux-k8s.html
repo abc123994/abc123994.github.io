@@ -9,38 +9,38 @@
 </head>
 
 <body class="stackedit">
-  <div class="stackedit__html"><h1 id="arch-k8s-install-guild">ARCH K8S INSTALL GUILD</h1>
-<h3 id="kmaster">kmaster</h3>
-<h4 id="required">required</h4>
-<ol>
-<li>etcd<br>
-pacman -Sy base-devel<br>
-git clone <a href="https://aur.archlinux.org/snapd.git">https://aur.archlinux.org/snapd.git</a><br>
-cd snapd<br>
-makepkg -si<br>
-sudo systemctl enable --now snapd.socket<br>
-sudo ln -s /var/lib/snapd/snap /snap<br>
-reboot<br>
-sudo snap install etcd</li>
-<li>control plane<br>
-pacman -Sy kubernetes-control-plane<br>
-systemctl enable kubelet.service</li>
-<li>crio<br>
-sudo pacman -Sy cri-o<br>
-systemctl enable crio</li>
-<li>cni plugin<br>
-sudo pacman -Sy cni-plugins</li>
-<li>kubeadm kubelet<br>
-sudo pacman -Sy kubeadm kubelet<br>
-systemctl enable kubelet</li>
-</ol>
-<h4 id="configure">configure</h4>
-<ol>
-<li>swapoff -a <strong>always</strong></li>
-<li>network</li>
-</ol>
-<pre><code>bash
-$ cat &gt; kubernetes.conf &lt;&lt;EOF
+  <div class="stackedit__html"><h1 id="archlinux-k8s">archlinux-k8s</h1>
+<h2 id="kmaster--knode-install-guid">kmaster &amp; knode install guid</h2>
+<h3 id="snap">snap</h3>
+<pre><code>pacman -Sy base-devel
+git clone https://aur.archlinux.org/snapd.git
+cd snapd
+makepkg -si
+sudo systemctl enable --now snapd.socket
+sudo ln -s /var/lib/snapd/snap /snap
+reboot
+</code></pre>
+<h3 id="etcd">etcd</h3>
+<pre><code>snap install etcd 
+</code></pre>
+<h3 id="tools-kits">tools-kits</h3>
+<pre><code>pacman -Sy kubernetes-control-plane
+systemctl enable kubelet.service
+pacman -Sy kubeadm kubectl
+</code></pre>
+<h3 id="crio">crio</h3>
+<pre><code>pacman -Sy cri-o
+systemctl enable crio
+</code></pre>
+<h3 id="cni">cni</h3>
+<pre><code>pacman -Sy cni-plugins
+</code></pre>
+<h2 id="configure">configure</h2>
+<h3 id="swapoff">swapoff</h3>
+<pre><code>swapoff -a
+</code></pre>
+<h3 id="let-iptables-see-bridged-traffic">let iptables see bridged traffic</h3>
+<pre><code>$ cat &gt; kubernetes.conf &lt;&lt;EOF
 
 net.bridge.bridge-nf-call-iptables=1
 
@@ -61,12 +61,28 @@ $ sudo cp kubernetes.conf  /etc/sysctl.d/kubernetes.conf
 $ sudo sysctl -p /etc/sysctl.d/kubernetes.conf
 $ sudo modprobe br_netfilter
 </code></pre>
-<ol start="3">
-<li>sudo sudo kubeadm init --pod-network-cidr=‘10.85.0.0/16’  --cri-socket=’/var/run/crio/crio.sock’</li>
-<li>dns</li>
+<h2 id="kmaster">kmaster</h2>
+<pre><code>sudo kubeadm init --pod-network-cidr='10.244.0.0/16'  --cri-socket='/var/run/crio/crio.sock'  --v=5
+</code></pre>
+<h3 id="configs">configs</h3>
+<pre><code>mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+export KUBECONFIG=/etc/kubernetes/admin.conf
+</code></pre>
+<h3 id="flannel-net-work">flannel net work</h3>
+<pre><code>kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+</code></pre>
+<p>here i suffer some problem that kmaster is not ready<br>
+and there’s error not found cni plugin<br>
+just move it from <strong>opt/cni/bin/flannel</strong></p>
+<h2 id="knode">knode</h2>
+<p>kubeadm join …</p>
+<h2 id="others">others</h2>
+<ol>
+<li>dns to pods</li>
 </ol>
-<pre><code>
-apiVersion: v1
+<pre><code>apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kube-dns
@@ -74,38 +90,51 @@ metadata:
 data:
   upstreamNameservers: |
     ["8.8.8.8"]
+</code></pre>
+<pre><code>kubectl create -f configmap.yml
+kubectl -n kube-system rollout restart deployment coredns
+</code></pre>
+<ol start="2">
+<li>examples</li>
+</ol>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: docker.io/nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30000
+  type: NodePort
 
 </code></pre>
-<p>kubectl create -f configmap.yml<br>
-kubectl -n kube-system rollout restart deployment coredns</p>
-<h3 id="knode">knode</h3>
-<p>same as kmaster 1,2 step and install crio<br>
-4. kubeadm join …</p>
-<p>若網路有問題一直join不了master端執行下面指令試試</p>
-<pre><code>
- swapoff  -a 
- kubeadm  reset  
- systemctl  daemon-reload 
- systemctl  restart kubelet  iptables  -F &amp;&amp; iptables -t nat -F &amp;&amp; iptables  -t mangle -F &amp;&amp; iptables -X
-</code></pre>
-<hr>
-<h1 id="use-k8s">USE K8S</h1>
-<hr>
-<h1 id="manage-k8s">Manage K8S</h1>
-<h3 id="k8s-dashboard">k8s dashboard</h3>
-<p>操作k8s的後台,從後台介面看到系統運行、運行概況、調適程式…等</p>
-<ol>
-<li>dashboard 安裝及設定</li>
-</ol>
-<h3 id="k8s-metric-server">k8s metric server</h3>
-<p>查看pod、node的使用狀況,<br>
-kubectl top node<br>
-kubectl top pod -namespace</p>
-<ol>
-<li>metric server 安裝及設定</li>
-</ol>
-<h3 id="k9s">k9s</h3>
-<p>kubectl功能介面化的一個工具</p>
+<p>kubectl apply -f nginx.yaml<br>
+kubectl get all -A<br>
+http://[nodeaddress]:3000 to verify</p>
 </div>
 </body>
 
