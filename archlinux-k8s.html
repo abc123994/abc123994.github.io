@@ -135,6 +135,133 @@ spec:
 <p>kubectl apply -f nginx.yaml<br>
 kubectl get all -A<br>
 http://[nodeaddress]:30000 to verify</p>
+<h1 id="pods">pods</h1>
+<h3 id="deployment">deployment</h3>
+<h3 id="statefulset">statefulset</h3>
+<h1 id="service">Service</h1>
+<h3 id="nodeport">nodeport</h3>
+<h3 id="loadbalanccer">LoadBalanccer</h3>
+<h3 id="clusterip">ClusterIP</h3>
+<h1 id="ingress">ingress</h1>
+<p>1- ingress control</p>
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/cloud/deploy.yaml
+</code></pre>
+<p>2-set ingress control</p>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.1.100 # Replace this with your desired IP address
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+</code></pre>
+<p>3- example</p>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: docker.io/nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.1.100
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: test-ingress.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+  ingressClassName: nginx
+---
+</code></pre>
+<p>result:</p>
+<pre><code>NAMESPACE       NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)                      AGE
+default         service/kubernetes                           ClusterIP      10.96.0.1        &lt;none&gt;          443/TCP                      49d
+default         service/nginx-service                        LoadBalancer   10.103.53.11     192.168.1.100   80:30183/TCP                 19m
+ingress-nginx   service/ingress-nginx-controller             LoadBalancer   10.99.93.27      192.168.1.100   80:31348/TCP,443:32126/TCP   89m
+ingress-nginx   service/ingress-nginx-controller-admission   ClusterIP      10.111.190.149   &lt;none&gt;          443/TCP                      89m
+kube-system     service/kube-dns                             ClusterIP      10.96.0.10       &lt;none&gt;          53/UDP,53/TCP,9153/TCP       49d
+
+NAMESPACE      NAME                             DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-flannel   daemonset.apps/kube-flannel-ds   3         3         3       3            3           &lt;none&gt;                   49d
+kube-system    daemonset.apps/kube-proxy        3         3         3       3            3           kubernetes.io/os=linux   49d
+
+NAMESPACE       NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+default         deployment.apps/linebot-deployment         1/1     1            1           38h
+default         deployment.apps/nginx-deployment           1/1     1            1           19m
+ingress-nginx   deployment.apps/ingress-nginx-controller   1/1     1            1           89m
+kube-system     deployment.apps/coredns                    2/2     2            2           49d
+
+NAMESPACE       NAME                                                  DESIRED   CURRENT   READY   AGE
+default         replicaset.apps/nginx-deployment-bdf9cc489            1         1         1       19m
+ingress-nginx   replicaset.apps/ingress-nginx-controller-75ccffdd57   1         1         1       89m
+kube-system     replicaset.apps/coredns-76b94f99d5                    2         2         2       49d
+kube-system     replicaset.apps/coredns-787d4945fb                    0         0         0       49d
+
+NAMESPACE       NAME                                       COMPLETIONS   DURATION   AGE
+ingress-nginx   job.batch/ingress-nginx-admission-create   1/1           13s        89m
+ingress-nginx   job.batch/ingress-nginx-admission-patch    1/1           28s        89m
+
+</code></pre>
+<pre><code>NAME           CLASS   HOSTS              ADDRESS         PORTS   AGE
+test-ingress   nginx   test-ingress.com   192.168.1.100   80      20m
+
+</code></pre>
+<p>add 192.168.1.100 test-ingress to /etc/hosts to verify</p>
 </div>
 </body>
 
