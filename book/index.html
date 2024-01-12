@@ -154,7 +154,7 @@ body {
 img {
     width: 100%; /* or any custom size */
     height: 100%; 
-    object-fit: contain;
+    
 }
 
 
@@ -176,6 +176,7 @@ img {
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.js"></script>
+<script src="photo.js"></script>
 <script>
 var ok=false;
 function pageListener(){
@@ -222,19 +223,26 @@ $('.grid').isotope({
 });
 $(document).ready(function(){
 
-	let i=0,length=31;
-	
+	console.log(myphoto)
+	let i=0,length=0;
+	length=(myphoto.length/6);
+	if(myphoto.length%6>0)
+	  length+=1;
+	//the buttom
+	length+=1;
+	let m_push_photo=0;
 	for(i; i<length;i++)
 	{
 		if (i<length-1){
 			let page='<div class="page">';
 			page +='<div class="grid">';
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
-			page +='<div class="grid-item"><img src="pics/12301310.jpg" alt="Your Image"></div>'
+			for (let j=0;j<6;j++){
+				m_push_photo<myphoto.length==true?
+				page +='<div class="grid-item"><img src='+myphoto[m_push_photo]+' alt="Your Image"></div>':
+				page +='<div class="grid-item"></div>';
+				m_push_photo++;
+			}
+			
 			page +='<div class="grid-item-bt" style="text-align:center; font-size: 30px;">'+(i+1)+'</div>'
 			page +='</div></div>'
 			$('#pages').append($(page)); 
