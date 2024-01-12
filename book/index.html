@@ -159,7 +159,14 @@ img {
 
 
 </style>
+<audio id="backgroundAudio" loop autoplay>
+  <source src="music/winter_memories.mp3" type="audio/mp3">
+  Your browser does not support the audio tag.
+</audio>
 <div class="book">
+
+
+
   <div id="pages" class="pages">
     <div class="page"><p>PHOTO<br></p></div>
   </div>
@@ -170,17 +177,24 @@ img {
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.js"></script>
 <script>
-
+var ok=false;
 function pageListener(){
+
 	 let pages = $('.page');
 	
 	for(var i = 0; i < pages.length; i++)
 	{
-		console.log(i)
+		
 		//Or var page = pages[i];
 		pages[i].pageNum = i + 1;
 		pages[i].onclick=function(){
-		  
+			if (ok==false){
+				var audio = $("#backgroundAudio")[0];
+				audio.muted = false; // Mute the audio
+				audio.play();
+				ok=true;
+				console.log("play audio");
+			}
 			if (this.pageNum % 2 === 0)
 			{
 				this.classList.remove('flipped');
@@ -207,6 +221,7 @@ $('.grid').isotope({
   }
 });
 $(document).ready(function(){
+
 	let i=0,length=31;
 	
 	for(i; i<length;i++)
