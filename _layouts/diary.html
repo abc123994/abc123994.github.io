@@ -11,3 +11,4 @@
 </head>
 {% assign path_parts = page.path | split: "/" %}{% assign entry_day = path_parts[1] %}<body><div class="page"><nav><a class="back" href="{{ '/' | relative_url }}">回到所有記錄</a><span>{{ entry_day | date: "%Y.%m.%d · %a" | upcase }}</span></nav><div class="date">{{ entry_day }}</div><h1>{{ page.title }}</h1>{% if page.summary %}<p class="summary">{{ page.summary }}</p>{% endif %}<article>{{ content }}</article></div></body>
 </html>
+<script>location.replace('{{ '/' | relative_url }}?route={{ page.url | uri_escape }}');</script>
