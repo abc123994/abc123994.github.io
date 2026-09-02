@@ -1,40 +1,34 @@
 # 日記
 
-這個 GitHub Pages 網站是唯讀日記；Git 是編輯入口。
+這是一個由 Git 維護的靜態日記網站。
 
-## 新增一篇日記
+## 新增日記
 
 建立日期資料夾與 Markdown 檔案：
 
 ```text
-diary/2026-09-02/charging-cable.md
+diary/YYYY-MM-DD/title.md
 ```
 
-檔案內容使用這個最小格式：
+檔案內容：
 
 ```markdown
 ---
-title: 買了一條充電線
-date: 2026-09-02 23:41:00
-summary: 下午才起床，出門買了條充電線。
+title: XXX
+date: YYYY-MM-DD HH:MM:SS
+summary: XXX
 ---
 
-下午才起床。
-
-出門買了條充電線。
+XXX
 ```
 
-圖片可以放在同一個資料夾，並從 Markdown 引用：
+圖片可放在同一個資料夾，再用 Markdown 引用：
 
 ```markdown
-![照片](charging-cable.jpg)
+![照片](photo.jpg)
 ```
 
-完成後 `git add`、`git commit`、`git push`；GitHub Actions 會建置並發布。首頁會自動依 `date` 倒序列出文章。
-
-## 封存
-
-轉置前的舊站封存於 Git tag：`archive/pre-diary-2026-09-02`。
+提交並推送後，網站會自動建置發布。首頁會依日期倒序列出日記。
 
 ## 本機預覽
 
