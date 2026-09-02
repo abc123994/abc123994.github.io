@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>archlinux-k8s</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="archlinux-k8s">archlinux-k8s</h1>
+<h2 id="kmaster--knode-install-guid">kmaster &amp; knode install guid</h2>
+<h3 id="snap">snap</h3>
+<pre><code>pacman -Sy base-devel
+git clone https://aur.archlinux.org/snapd.git
+cd snapd
+makepkg -si
+sudo systemctl enable --now snapd.socket
+sudo ln -s /var/lib/snapd/snap /snap
+reboot
+</code></pre>
+<h3 id="etcd">etcd</h3>
+<pre><code>snap install etcd 
+</code></pre>
+<h3 id="tools-kits">tools-kits</h3>
+<pre><code>pacman -Sy kubernetes-control-plane
+systemctl enable kubelet.service
+pacman -Sy kubeadm kubectl
+</code></pre>
+<h3 id="crio">crio</h3>
+<pre><code>pacman -Sy cri-o
+systemctl enable crio
+</code></pre>
+<h3 id="cni">cni</h3>
+<pre><code>pacman -Sy cni-plugins
+</code></pre>
+<h2 id="configure">configure</h2>
+<h3 id="swapoff">swapoff</h3>
+<pre><code>swapoff -a
+</code></pre>
+<h3 id="let-iptables-see-bridged-traffic">let iptables see bridged traffic</h3>
+<pre><code>$ cat &gt; kubernetes.conf &lt;&lt;EOF
+
+net.bridge.bridge-nf-call-iptables=1
+
+net.bridge.bridge-nf-call-ip6tables=1
+
+net.ipv4.ip_forward=1
+
+vm.swappiness=0
+
+vm.overcommit_memory=1
+
+vm.panic_on_oom=0
+
+EOF
+
+$ sudo cp kubernetes.conf  /etc/sysctl.d/kubernetes.conf
+
+$ sudo sysctl -p /etc/sysctl.d/kubernetes.conf
+$ sudo modprobe br_netfilter
+</code></pre>
+<h2 id="kmaster">kmaster</h2>
+<pre><code>sudo kubeadm init --pod-network-cidr='10.244.0.0/16'  --cri-socket='/var/run/crio/crio.sock'  --v=5
+</code></pre>
+<h3 id="configs">configs</h3>
+<pre><code>mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+export KUBECONFIG=/etc/kubernetes/admin.conf
+</code></pre>
+<h3 id="flannel-net-work">flannel net work</h3>
+<pre><code>kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+</code></pre>
+<p>here i suffer some problem that kmaster is not ready<br>
+and there’s error not found cni plugin<br>
+just move it from <strong>opt/cni/bin/flannel</strong></p>
+<h2 id="knode">knode</h2>
+<p>kubeadm join …</p>
+<h2 id="others">others</h2>
+<ol>
+<li>dns to pods</li>
+</ol>
+<pre><code>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-dns
+  namespace: kube-system
+data:
+  upstreamNameservers: |
+    ["8.8.8.8"]
+</code></pre>
+<pre><code>kubectl create -f configmap.yml
+kubectl -n kube-system rollout restart deployment coredns
+</code></pre>
+<ol start="2">
+<li>examples</li>
+</ol>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: docker.io/nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30000
+  type: NodePort
+
+</code></pre>
+<p>kubectl apply -f nginx.yaml<br>
+kubectl get all -A<br>
+http://[nodeaddress]:30000 to verify</p>
+<h1 id="pods">pods</h1>
+<h3 id="deployment">deployment</h3>
+<h3 id="statefulset">statefulset</h3>
+<h1 id="service">Service</h1>
+<h3 id="nodeport">nodeport</h3>
+<h3 id="loadbalanccer">LoadBalanccer</h3>
+<h3 id="clusterip">ClusterIP</h3>
+<h1 id="ingress">ingress</h1>
+<p>1- ingress control</p>
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/cloud/deploy.yaml
+</code></pre>
+<p>2-set ingress control</p>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.1.100 # Replace this with your desired IP address
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+</code></pre>
+<p>3- example</p>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: docker.io/nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.1.100
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: test-ingress.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+  ingressClassName: nginx
+---
+</code></pre>
+<p>result:</p>
+<pre><code>NAMESPACE       NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)                      AGE
+default         service/kubernetes                           ClusterIP      10.96.0.1        &lt;none&gt;          443/TCP                      49d
+default         service/nginx-service                        LoadBalancer   10.103.53.11     192.168.1.100   80:30183/TCP                 19m
+ingress-nginx   service/ingress-nginx-controller             LoadBalancer   10.99.93.27      192.168.1.100   80:31348/TCP,443:32126/TCP   89m
+ingress-nginx   service/ingress-nginx-controller-admission   ClusterIP      10.111.190.149   &lt;none&gt;          443/TCP                      89m
+kube-system     service/kube-dns                             ClusterIP      10.96.0.10       &lt;none&gt;          53/UDP,53/TCP,9153/TCP       49d
+
+NAMESPACE      NAME                             DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-flannel   daemonset.apps/kube-flannel-ds   3         3         3       3            3           &lt;none&gt;                   49d
+kube-system    daemonset.apps/kube-proxy        3         3         3       3            3           kubernetes.io/os=linux   49d
+
+NAMESPACE       NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+default         deployment.apps/linebot-deployment         1/1     1            1           38h
+default         deployment.apps/nginx-deployment           1/1     1            1           19m
+ingress-nginx   deployment.apps/ingress-nginx-controller   1/1     1            1           89m
+kube-system     deployment.apps/coredns                    2/2     2            2           49d
+
+NAMESPACE       NAME                                                  DESIRED   CURRENT   READY   AGE
+default         replicaset.apps/nginx-deployment-bdf9cc489            1         1         1       19m
+ingress-nginx   replicaset.apps/ingress-nginx-controller-75ccffdd57   1         1         1       89m
+kube-system     replicaset.apps/coredns-76b94f99d5                    2         2         2       49d
+kube-system     replicaset.apps/coredns-787d4945fb                    0         0         0       49d
+
+NAMESPACE       NAME                                       COMPLETIONS   DURATION   AGE
+ingress-nginx   job.batch/ingress-nginx-admission-create   1/1           13s        89m
+ingress-nginx   job.batch/ingress-nginx-admission-patch    1/1           28s        89m
+
+</code></pre>
+<pre><code>NAME           CLASS   HOSTS              ADDRESS         PORTS   AGE
+test-ingress   nginx   test-ingress.com   192.168.1.100   80      20m
+
+</code></pre>
+<p>add 192.168.1.100 test-ingress to /etc/hosts to verify</p>
+</div>
+</body>
+
+</html>

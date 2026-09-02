@@ -1,1 +1,31 @@
-theme: jekyll-theme-cayman
+title: 日記
+description: 寫給自己的日常記錄
+markdown: kramdown
+permalink: pretty
+include:
+  - diary
+defaults:
+  - scope:
+      path: "diary"
+    values:
+      layout: diary
+
+exclude:
+  - archive
+  - default.html
+  - git.html
+  - archlinux.html
+  - archlinux-k8s.html
+  - docker-container.html
+  - book
+  - global.js
+
+# The old site remains recoverable in the archive tag, but is not published by the new site.
+exclude:
+  - default.html
+  - git.html
+  - archlinux.html
+  - archlinux-k8s.html
+  - docker-container.html
+  - book
+  - global.js

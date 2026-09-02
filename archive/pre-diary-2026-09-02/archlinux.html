@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>archlinux</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="arch-linux">arch linux</h1>
+<h2 id="env">env</h2>
+<ol>
+<li>systemtime<br>
+timedatectl set-ntp true</li>
+</ol>
+<h2 id="硬碟資訊">硬碟資訊</h2>
+<p>fdisk -l</p>
+<h2 id="硬碟分割">硬碟分割</h2>
+<ol>
+<li>cfdisk gpt</li>
+</ol>
+
+<table>
+<thead>
+<tr>
+<th>disk</th>
+<th align="center">type</th>
+<th>usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/dev/sda1</td>
+<td align="center">swap</td>
+<td>MEMORY SWAP</td>
+</tr>
+<tr>
+<td>/dev/sda2</td>
+<td align="center">ext4</td>
+<td>DATA</td>
+</tr>
+<tr>
+<td>/dev/sda3</td>
+<td align="center"></td>
+<td>BOOT</td>
+</tr>
+</tbody>
+</table><h2 id="格式化">格式化</h2>
+<ol>
+<li>mkfs.ext4  /dev/sda2</li>
+</ol>
+<h2 id="記憶體配置">SWAP配置</h2>
+<ol>
+<li>mkswap /dev/sda1</li>
+<li>swapon /dev/sda1</li>
+</ol>
+<h2 id="安裝系統">安裝系統</h2>
+<ol>
+<li>mount /dev/sda2 /mnt</li>
+<li>pacstrap /mnt base linux linux-firmware</li>
+</ol>
+<h2 id="配置系統">配置系統</h2>
+<ol>
+<li>新增系統開機掛載資訊<br>
+1.1 genfstab -U /mnt &gt;&gt; /mnt/etc/fstab</li>
+<li>進入系統<br>
+2.1 arch-chroot /mnt</li>
+<li>環境設定<br>
+3.1 時間<br>
+ln -sf /usr/share/zoneinfo/<em>Region</em>/<em>City</em> /etc/localtime<br>
+hwclock --systohc<br>
+3.2 語系<br>
+locale-gen<br>
+echo  LANG=en_US.UTF-8 &gt; /etc/locale.conf &gt;<br>
+echo KEYMAP=de-latinl &gt; /etc/vconsole.conf<br>
+3.3 網路<br>
+echo computername &gt; /etc/hostname<br>
+echo 127.0.0.1 localhost  &gt;&gt; /etc/hosts<br>
+echo ::1 localhost &gt;&gt;/etc/hosts<br>
+3.4 開機設定<br>
+pacman -Sy grub<br>
+lsblk 系統硬碟資訊<br>
+grub-install --target=i386-pc  /dev/sda<br>
+grub-mkconfig -o /boot/grub/grub.cfg<br>
+3.5 密碼<br>
+passwd</li>
+</ol>
+<h2 id="os-網路配置">os 網路配置</h2>
+<h3 id="static-ip">static ip</h3>
+<pre><code>/etc/systemd/network/0.network
+[Match]
+Name=enp0s3
+[Network]
+Address=192.168.1.4/24
+Gateway=192.168.1.1
+Broadcast=192.168.1.255
+</code></pre>
+<p>systemctl enable systemd-networkd.service<br>
+systemctl start systemd-netword.service<br>
+echo nameserver 8.8.8.8 &gt;&gt; /etc/resolv.conf</p>
+<h2 id="mirror-list">mirror list</h2>
+<p>/etc/pacman.d/mirrorlist</p>
+<pre><code>#Server = http://archlinux.ccns.ncku.edu.tw/archlinux/$repo/os/$arch
+#Server = http://free.nchc.org.tw/arch/$repo/os/$arch
+#Server = https://free.nchc.org.tw/arch/$repo/os/$arch
+#Server = http://archlinux.cs.nctu.edu.tw/$repo/os/$arch
+#Server = http://shadow.ind.ntou.edu.tw/archlinux/$repo/os/$arch
+#Server = https://shadow.ind.ntou.edu.tw/archlinux/$repo/os/$arch
+#Server = http://ftp.tku.edu.tw/Linux/ArchLinux/$repo/os/$arch
+#Server = http://ftp.yzu.edu.tw/Linux/archlinux/$repo/os/$arch
+#Server = https://ftp.yzu.edu.tw/Linux/archlinux/$repo/os/$arch
+</code></pre>
+<h2 id="sshd">sshd</h2>
+<p>pacman -Sy openssh<br>
+systemctl enable sshd.service<br>
+systemctl start sshd.service<br>
+/etc/ssh/sshd_config</p>
+<pre><code>**PermitRootLogin yes**
+</code></pre>
+<pre><code>add user
+useradd -G wheel user
+passwd user
+vi /etc/sudoers
+</code></pre>
+</div>
+</body>
+
+</html>
