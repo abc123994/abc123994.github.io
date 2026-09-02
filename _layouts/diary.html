@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} · {{ site.title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--paper:#f5f0e8;--ink:#282621;--muted:#8b8377;--line:#d9d0c3;--accent:#a4523c}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Serif TC",Georgia,serif}.page{max-width:48rem;margin:auto;padding:clamp(2rem,8vw,7rem) 1.5rem}nav{display:flex;justify-content:space-between;margin-bottom:clamp(4rem,14vh,10rem);font:400 .75rem "DM Mono",monospace}a{color:var(--accent);text-decoration:none}a:hover,a:focus-visible{text-decoration:underline}.back{color:var(--muted)}.date{color:var(--muted);font:400 .78rem "DM Mono",monospace;letter-spacing:.05em}h1{margin:.8rem 0 1.8rem;font-size:clamp(2rem,6vw,4.6rem);line-height:1.2;letter-spacing:-.07em}.summary{margin:0 0 3rem;color:var(--muted);line-height:1.9}article{border-top:1px solid var(--line);padding-top:2.5rem;font-size:1.08rem;line-height:2.1}article p{margin:0 0 1.5rem}article img{max-width:100%;height:auto;display:block;margin:2rem 0}
+  </style>
+</head>
+<body><div class="page"><nav><a class="back" href="{{ '/' | relative_url }}">← 回到日記</a><span>{{ page.date | date: "%Y.%m.%d" }}</span></nav><div class="date">{{ page.date | date: "%A · %Y-%m-%d" }}</div><h1>{{ page.title }}</h1>{% if page.summary %}<p class="summary">{{ page.summary }}</p>{% endif %}<article>{{ content }}</article></div></body>
+</html>
